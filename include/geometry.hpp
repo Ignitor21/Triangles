@@ -12,6 +12,8 @@ bool is_equal(double lhs, double rhs)
     return (std::abs(lhs - rhs) < EPSILON);
 }
 
+namespace geometry
+{
 class Point
 {
 public:
@@ -31,9 +33,10 @@ public:
         return (std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
     }
 
-    bool equal(const Point &rhs) const
+    bool operator == (const Point &rhs) const
     {
-        assert(valid() && rhs.valid());
+        if (!valid() || !rhs.valid())
+            return false;
         return ((std::abs(x - rhs.x) < EPSILON) && (std::abs(y - rhs.y) < EPSILON) && (std::abs(z - rhs.z) < EPSILON));
     }
 };
@@ -45,6 +48,7 @@ public:
 
     Vector(double x_, double y_, double z_) : x(x_), y(y_), z(z_) {}
     Vector(const Point& point) : x(point.x), y(point.y), z(point.z) {}
+    Vector(const Point& point1, const Point& point2) : x(point2.x - point1.x), y(point2.y - point1.y), z(point2.z - point1.z) {}
     Vector() {}
 
     void print() const
@@ -56,36 +60,46 @@ public:
     {
         return (std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
     }
-
-    double scalar_mult(const Vector& vec1, const Vector& vec2) const
-    {
-        assert(vec1.valid() && vec2.valid());
-        return (vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z); 
-    }
-
-    static Vector vector_mult(const Vector& vec1, const Vector& vec2)
-    {
-        assert(vec1.valid() && vec2.valid());
-        Vector ans;
-        ans.x = vec1.y*vec2.z - vec1.z*vec2.y;
-        ans.y = vec1.z*vec2.x - vec1.x*vec2.z;
-        ans.z = vec1.z*vec2.y - vec1.y*vec2.x;
-        return ans;
-    }
-
-    static bool collinear(const Vector& vec1, const Vector& vec2)
-    {
-        assert(vec1.valid() && vec2.valid());
-        Vector ans = vector_mult(vec1, vec2);
-        return (is_equal(ans.x, 0) && is_equal(ans.y, 0) && is_equal(ans.z, 0));
-    }
 };
+
+Vector vector_mult(const Vector& vec1, const Vector& vec2)
+{
+    assert(vec1.valid() && vec2.valid());
+    Vector ans;
+    ans.x = vec1.y*vec2.z - vec1.z*vec2.y;
+    ans.y = vec1.z*vec2.x - vec1.x*vec2.z;
+    ans.z = vec1.x*vec2.y - vec1.y*vec2.x;
+    return ans;
+}
+
+bool collinear(const Vector& vec1, const Vector& vec2)
+{
+    assert(vec1.valid() && vec2.valid());
+    Vector ans = vector_mult(vec1, vec2);
+    return (is_equal(ans.x, 0) && is_equal(ans.y, 0) && is_equal(ans.z, 0));
+}
+
+double scalar_mult(const Vector& vec1, const Vector& vec2)
+{
+    assert(vec1.valid() && vec2.valid());
+    return (vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z); 
+}
 
 class Line
 {
 public:
     Vector direction;
     Point point;
+
+    Line(const Vector& dir, const Point& p) : direction(dir), point(p) {}
+    Line() {}
+
+    bool point_belongs(const Point& p) const
+    {
+        assert(p.valid());
+        Vector new_vec{p , point};
+        return collinear(direction, new_vec);
+    }
 };
 
 class Plane
@@ -113,3 +127,13 @@ public:
         norm.print();
     }
 };
+
+Line planes_intersection(const Plane& lhs, const Plane& rhs)
+{
+    if (collinear(lhs.norm, rhs.norm))
+    {
+
+    }
+}
+
+}

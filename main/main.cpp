@@ -1,5 +1,7 @@
 #include <iostream>
-#include "geometry.hpp"
+#include <geometry.hpp>
+
+using namespace geometry;
 
 int main()
 {
@@ -17,7 +19,7 @@ int main()
     Point point5{-6, -3, -15};
     Vector vec1(point4);
     Vector vec2(point5);
-    std::cout << Vector::collinear(vec1, vec2) << "\n";
+    std::cout << collinear(vec1, vec2) << "\n";
     //point.print();
     return 0;
 }
