@@ -14,6 +14,9 @@ bool is_equal(double lhs, double rhs)
 
 namespace geometry
 {
+
+class Plane;
+
 class Point
 {
 public:
@@ -60,6 +63,11 @@ public:
     {
         return (std::isfinite(x) && std::isfinite(y) && std::isfinite(z));
     }
+
+    bool null() const
+    {
+        return is_equal(x, 0) && is_equal(y, 0) && is_equal(z, 0);
+    }
 };
 
 Vector vector_mult(const Vector& vec1, const Vector& vec2)
@@ -100,6 +108,11 @@ public:
         Vector new_vec{p , point};
         return collinear(direction, new_vec);
     }
+
+    bool valid() const
+    {
+        return (direction.valid() && point.valid());
+    }
 };
 
 class Plane
@@ -111,9 +124,15 @@ public:
     Plane(const Point& fst, const Point& snd, const Point& thd) : 
     A((snd.y - fst.y)*(thd.z - fst.z) - (thd.y - fst.y)*(snd.z - fst.z)), 
     B((thd.x - fst.x)*(snd.z - fst.z) - (snd.x - fst.x)*(thd.z - fst.z)),
-    C((snd.x - fst.x)*(thd.y - fst.y) - (thd.x - fst.x)*(snd.y - fst.y)),
-    D(-A*fst.x -B*fst.y -C*fst.z),
-    norm(A, B, C) {}
+    C((snd.x - fst.x)*(thd.y - fst.y) - (thd.x - fst.x)*(snd.y - fst.y))
+    {
+        double factor = 1/std::sqrt(A*A + B*B + C*C);
+        A *= factor;
+        B *=factor;
+        C *= factor;
+        D = -A*fst.x -B*fst.y -C*fst.z;
+        norm = Vector{A, B, C};
+    }
 
     bool valid() const
     {
@@ -126,14 +145,69 @@ public:
         std::cout << " Normal vector = ";
         norm.print();
     }
+
+    double find_halfspace(const Point& point) const
+    {
+        return A*point.x + B*point.y + C*point.z + D;
+    }
 };
 
-Line planes_intersection(const Plane& lhs, const Plane& rhs)
+Line plane_intersection(const Plane& plane1, const Plane& plane2)
 {
-    if (collinear(lhs.norm, rhs.norm))
-    {
-
-    }
+    //TODO
+    Line ans;
+    return ans;
 }
 
+class Triangle
+{
+public:
+    std::vector<Point> verticies;
+
+    Triangle(const Point& p1, const Point& p2, const Point& p3)
+    {
+        verticies.push_back(p1);
+        verticies.push_back(p2);
+        verticies.push_back(p3);
+    }
+};
+
+bool triangles_intersection_2d(const Triangle& tr1, const Triangle& tr2)
+{
+    //TODO
+    return true;
+}
+
+bool intervals_overlap(const Triangle& tr1, const Triangle& tr2, const Line&)
+{
+    //TODO
+    return true;
+}
+
+bool triangles_intersection_3d(const Triangle& tr1, const Triangle& tr2)
+{
+    Plane plane1{tr1.verticies[0], tr1.verticies[1], tr1.verticies[2]};
+    Plane plane2{tr2.verticies[0], tr2.verticies[1], tr2.verticies[2]};
+
+    double half_space1 = plane2.find_halfspace(tr1.verticies[0]);
+    double half_space2 = plane2.find_halfspace(tr1.verticies[1]);
+    double half_space3 = plane2.find_halfspace(tr1.verticies[2]);
+
+    if ((half_space1 > 0 && half_space2 > 0 && half_space3 > 0) || (half_space1 < 0 && half_space2 < 0 && half_space3 < 0))
+        return false;
+
+    Line intersection = plane_intersection(plane1, plane2);
+    if (!intersection.valid())
+    {
+        return false;
+    }
+
+    if (intersection.direction.null())
+    {
+        return triangles_intersection_2d(tr1, tr2);
+    }
+
+    return intervals_overlap(tr1, tr2, intersection);
+    
+}
 }

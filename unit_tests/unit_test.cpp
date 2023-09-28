@@ -10,10 +10,12 @@ TEST(POINT, Subtest)
     double a = NAN;
     Point p2{a, 10, 15};
     Point p3(0, 0, 0);
+    
     EXPECT_TRUE(p1.valid());
     EXPECT_FALSE(p2.valid());
     EXPECT_FALSE(p2 == p3);
-    EXPECT_TRUE(p2 == p2);
+    EXPECT_FALSE(p2 == p2);
+    EXPECT_TRUE(p1 == p1);
 }
 
 int main(int argc, char** argv)
