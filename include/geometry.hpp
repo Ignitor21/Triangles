@@ -15,8 +15,6 @@ bool is_equal(double lhs, double rhs)
 namespace geometry
 {
 
-class Plane;
-
 class Point
 {
 public:
@@ -28,7 +26,7 @@ public:
 
     void print() const
     {
-        std::cout << "(" << x << ";" << y << ";" << z << ")" << "\n"; 
+        std::cout << "(" << x << ";" << y << ";" << z << ")"; 
     }
 
     bool valid() const
@@ -56,7 +54,7 @@ public:
 
     void print() const
     {
-        std::cout << "(" << x << ";" << y << ";" << z << ")" << "\n"; 
+        std::cout << "(" << x << ";" << y << ";" << z << ")"; 
     }
 
     bool valid() const
@@ -68,7 +66,33 @@ public:
     {
         return is_equal(x, 0) && is_equal(y, 0) && is_equal(z, 0);
     }
+
+    double length() const
+    {
+        assert(valid());
+        return std::sqrt(x*x + y*y + z*z);
+    }
 };
+
+Vector operator * (const double& number, const Vector& vec)
+{
+    return Vector{vec.x * number, vec.y * number, vec.z * number};
+}
+
+Vector operator * (const Vector& vec, const double& number)
+{
+    return number * vec;
+}
+
+Vector operator + (const Vector& vec1, const Vector& vec2)
+{
+    return Vector{vec1.x + vec2.x, vec1.y + vec2.y, vec1.z + vec2.z};
+}
+
+Vector operator - (const Vector& vec1, const Vector& vec2)
+{
+    return Vector{vec1.x - vec2.x, vec1.y - vec2.y, vec2.z - vec1.z};
+}
 
 Vector vector_mult(const Vector& vec1, const Vector& vec2)
 {
@@ -113,6 +137,15 @@ public:
     {
         return (direction.valid() && point.valid());
     }
+
+    void print() const
+    {
+        std::cout << "Line: Direction vector: ";
+        direction.print();
+        std::cout << " ";
+        std::cout << "Point: ";
+        point.print();
+    }
 };
 
 class Plane
@@ -131,7 +164,7 @@ public:
         B *=factor;
         C *= factor;
         D = -A*fst.x -B*fst.y -C*fst.z;
-        norm = Vector{A, B, C};
+        norm = Vector{-A, -B, -C};
     }
 
     bool valid() const
@@ -154,8 +187,33 @@ public:
 
 Line plane_intersection(const Plane& plane1, const Plane& plane2)
 {
-    //TODO
+    assert(plane1.valid() && plane2.valid());
+    Vector dir = vector_mult(plane1.norm, plane2.norm);
     Line ans;
+
+    if (dir.null())
+    {
+        if (is_equal(plane1.D, plane2.D))
+        {
+            ans.direction = dir;
+        }
+
+        return ans;
+    }
+
+    double s1 = plane1.D;
+    double s2 = plane2.D;
+    double n1n2dot = scalar_mult(plane1.norm, plane2.norm);
+    double n1normsqr = scalar_mult(plane1.norm, plane1.norm);
+    double n2normsqr = scalar_mult(plane2.norm, plane2.norm);
+    double a = (s2 * n1n2dot - s1 * n2normsqr)/(n1n2dot * n1n2dot - n1normsqr * n2normsqr);
+    double b = (s1 * n1n2dot - s2 * n2normsqr)/(n1n2dot * n1n2dot - n1normsqr * n2normsqr);
+    std::cout << "a = " << a << " " << "b = " << b << "\n";
+    Vector vec_to_point = a*plane1.norm + b*plane2.norm;
+    ans.point.x = vec_to_point.x;
+    ans.point.y = vec_to_point.y;
+    ans.point.z = vec_to_point.z;
+    ans.direction = dir;
     return ans;
 }
 
@@ -197,10 +255,6 @@ bool triangles_intersection_3d(const Triangle& tr1, const Triangle& tr2)
         return false;
 
     Line intersection = plane_intersection(plane1, plane2);
-    if (!intersection.valid())
-    {
-        return false;
-    }
 
     if (intersection.direction.null())
     {
