@@ -38,7 +38,7 @@ public:
     {
         if (!valid() || !rhs.valid())
             return false;
-        return ((std::abs(x - rhs.x) < EPSILON) && (std::abs(y - rhs.y) < EPSILON) && (std::abs(z - rhs.z) < EPSILON));
+        return (is_equal(x, rhs.x) && is_equal(y, rhs.y) && is_equal(z, rhs.z));
     }
 };
 
@@ -71,6 +71,18 @@ public:
     {
         assert(valid());
         return std::sqrt(x*x + y*y + z*z);
+    }
+
+    bool operator ==(const Vector& rhs) const
+    {
+        if (!valid() || !rhs.valid())
+            return false;
+        return (is_equal(x, rhs.x) && is_equal(y, rhs.y) && is_equal(z, rhs.z));
+    }
+
+    Vector operator- () const
+    {
+        return Vector{-x, -y, -z};
     }
 };
 
@@ -146,6 +158,13 @@ public:
         std::cout << "Point: ";
         point.print();
     }
+
+    bool operator ==(const Line& line)
+    {
+        if (!valid() || !line.valid())
+            return false;
+        return (direction == line.direction && point == line.point);
+    }
 };
 
 class Plane
@@ -164,12 +183,12 @@ public:
         B *=factor;
         C *= factor;
         D = -A*fst.x -B*fst.y -C*fst.z;
-        norm = Vector{-A, -B, -C};
+        norm = Vector{A, B, C};
     }
 
     bool valid() const
     {
-        return (std::isfinite(A) && std::isfinite(B) && std::isfinite(C) && std::isfinite(D));
+        return (std::isfinite(A) && std::isfinite(B) && std::isfinite(C) && std::isfinite(D) && norm.valid());
     }
 
     void print() const
@@ -193,7 +212,7 @@ Line plane_intersection(const Plane& plane1, const Plane& plane2)
 
     if (dir.null())
     {
-        if (is_equal(plane1.D, plane2.D))
+        if(((plane1.norm == -plane2.norm) && is_equal(-plane1.D, plane2.D)) || is_equal(plane1.D, plane2.D))
         {
             ans.direction = dir;
         }
@@ -201,14 +220,13 @@ Line plane_intersection(const Plane& plane1, const Plane& plane2)
         return ans;
     }
 
-    double s1 = plane1.D;
-    double s2 = plane2.D;
+    double s1 = -plane1.D;
+    double s2 = -plane2.D;
     double n1n2dot = scalar_mult(plane1.norm, plane2.norm);
     double n1normsqr = scalar_mult(plane1.norm, plane1.norm);
     double n2normsqr = scalar_mult(plane2.norm, plane2.norm);
     double a = (s2 * n1n2dot - s1 * n2normsqr)/(n1n2dot * n1n2dot - n1normsqr * n2normsqr);
     double b = (s1 * n1n2dot - s2 * n2normsqr)/(n1n2dot * n1n2dot - n1normsqr * n2normsqr);
-    std::cout << "a = " << a << " " << "b = " << b << "\n";
     Vector vec_to_point = a*plane1.norm + b*plane2.norm;
     ans.point.x = vec_to_point.x;
     ans.point.y = vec_to_point.y;
